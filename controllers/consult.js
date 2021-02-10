@@ -1,7 +1,8 @@
 const { response } = require("express");
 const fetch = require("node-fetch");
 
-const consult = (_, res = response) => {
+const consult = (req, res = response) => {
+  const { author } = req.body;
   const prefixs = `
         PREFIX ecrm: <http://erlangen-crm.org/170309/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -10,19 +11,21 @@ const consult = (_, res = response) => {
         `;
 
   // Query por el momento cableada
-  const query = `${prefixs} SELECT ?label
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
-            ecrm:P4_has_time-span ?span .
-    ?period ecrm:P4_has_time-span ?span ;
-            a ecrm:E4_Period ;
-            rdfs:label ?label.
+        ecrm:P14_carried_out_by ?creator .
+    ?artifact rdfs:label ?labelArtifact ;
+              ecrm:P45_consists_of ?material ;
+              ecrm:P50_has_current_keeper ?keeper .
+      
+    ?material rdfs:label ?labelMaterial .
+    ?keeper rdfs:label ?labelKeeper .        
     {
-      SELECT (?s as ?artifact)
+      SELECT (?c as ?creator)
       WHERE {
-        ?s a ecrm:E22_Man-Made_Object ;
-           rdfs:label "Puntas Líticas" ;
-           ecrm:P48_has_preferred_identifier ?o .                    
+        ?c a ecrm:E39_Actor ;
+           rdfs:label "${author}" .                  
       }
     }
   }`;
