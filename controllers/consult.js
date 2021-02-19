@@ -2,7 +2,8 @@ const { response } = require("express");
 const fetch = require("node-fetch");
 
 const consult = (req, res = response) => {
-  const { author } = req.body;
+  const { author, material, place, title } = req.body;
+  console.log(title);
   const prefixs = `
         PREFIX ecrm: <http://erlangen-crm.org/170309/>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -11,7 +12,7 @@ const consult = (req, res = response) => {
         `;
 
   // Query por el momento cableada
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
         ecrm:P14_carried_out_by ?creator .
@@ -20,14 +21,25 @@ const consult = (req, res = response) => {
               ecrm:P50_has_current_keeper ?keeper .
       
     ?material rdfs:label ?labelMaterial .
-    ?keeper rdfs:label ?labelKeeper .        
-    {
-      SELECT (?c as ?creator)
-      WHERE {
-        ?c a ecrm:E39_Actor ;
-           rdfs:label "${author}" .                  
-      }
+    ?keeper rdfs:label ?labelKeeper .
+    ?creator rdfs:label ?labelCreator .
+    ${
+      author &&
+      `FILTER( regex(lcase(?labelCreator), "${author.toLowerCase()}" )) .`
+    }       
+    ${
+      material &&
+      `FILTER( regex(lcase(?labelMaterial), "${material.toLowerCase()}" )) .`
     }
+    ${
+      title &&
+      `FILTER( regex(lcase(?labelArtifact), "${title.toLowerCase()}" )) .`
+    }
+    ${
+      place &&
+      `FILTER( regex(lcase(?labelKeeper), "${place.toLowerCase()}" )) .`
+    }
+    
   }`;
   // La query se envia por query params, de esta manera se codifica para poder ser enviada
   const urlEncodeQuery = encodeURIComponent(query);
