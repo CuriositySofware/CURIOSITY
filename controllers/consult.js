@@ -8,7 +8,7 @@ const prefixs = `
       PREFIX cit: <http://curiocity.org/>
       `;
 const consult = (req, res = response) => {
-  const { author, material, place, title } = req.body;
+  const { author="arte", material, place, title } = req.body;
 
   // Query por el momento cableada
   const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id
@@ -18,42 +18,45 @@ const consult = (req, res = response) => {
     ?artifact rdfs:label ?labelArtifact ;
               ecrm:P45_consists_of ?material ;
               ecrm:P50_has_current_keeper ?keeper ;
-              ecrm:P1_is_identified_by ?idCode .
+              ecrm:P48_has_preferred_identifier ?idCode .
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
     ?keeper rdfs:label ?labelKeeper .
     ?creator rdfs:label ?labelCreator .
     ${
-      author &&
-      `FILTER( regex(lcase(?labelCreator), "${author.toLowerCase()}" )) .`
+      author ?
+      `FILTER( regex(lcase(?labelCreator), "${author.toLowerCase()}" )) .` : ""
     }       
     ${
-      material &&
-      `FILTER( regex(lcase(?labelMaterial), "${material.toLowerCase()}" )) .`
+      material ?
+      `FILTER( regex(lcase(?labelMaterial), "${material.toLowerCase()}" )) .` : ""
     }
     ${
-      title &&
-      `FILTER( regex(lcase(?labelArtifact), "${title.toLowerCase()}" )) .`
+      title ?
+      `FILTER( regex(lcase(?labelArtifact), "${title.toLowerCase()}" )) .` : ""
     }
     ${
-      place &&
-      `FILTER( regex(lcase(?labelKeeper), "${place.toLowerCase()}" )) .`
+      place ?
+      `FILTER( regex(lcase(?labelKeeper), "${place.toLowerCase()}" )) .` : ""
     }
     
   }`;
-  // La query se envia por query params, de esta manera se codifica para poder ser enviada
-  const urlEncodeQuery = encodeURIComponent(query);
+
 
   // Aca se envia la consulta a graphDB(por ahora en local)
   fetch(
-    `http://localhost:7200/repositories/USB-CURIOSITY?query=${urlEncodeQuery}`,
+    `http://localhost:3030/CURIOSITY/sparql`,
     {
-      method: "GET",
+      method: "POST",
       headers: {
-        "content-type": "application/json",
+        "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
         accept: "application/sparql-results+json",
       },
+      body: new URLSearchParams({
+        query,
+      }),
+      
     }
   )
     .then((resp) => resp.json())
