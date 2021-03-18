@@ -77,35 +77,33 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel
+  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
-     		ecrm:P1_is_identified_by ?idCode ;
+        ecrm:P48_has_preferred_identifier ?idCode ;
     		ecrm:P3_has_note ?note ;
     		rdfs:label ?artifactLabel ;
       		ecrm:P50_has_current_keeper ?keeper ;
-    		ecrm:P45_consists_of ?material ;
-      		ecrm:P108i_was_produced_by ?prod .
+    		ecrm:P45_consists_of ?material .
     
-    ?prod ecrm:P14_carried_out_by ?author .
-    ?author rdfs:label ?authorLabel .
     ?material rdfs:label ?materialLabel .
     ?keeper rdfs:label ?keeperLabel .
     ?idCode rdfs:label "${id}" . 
+  	?prod ecrm:P108_has_produced ?artifact ;
+         ecrm:P14_carried_out_by ?author .
+  	?author rdfs:label ?authorLabel .
   }`;
 
-  const urlEncodeQuery = encodeURIComponent(query);
-
-  fetch(
-    `http://localhost:7200/repositories/USB-CURIOSITY?query=${urlEncodeQuery}`,
-    {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/sparql-results+json",
-      },
-    }
-  )
+  fetch(`http://localhost:3030/CURIOSITY/sparql`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+      accept: "application/sparql-results+json",
+    },
+    body: new URLSearchParams({
+      query,
+    }),
+  })
     .then((resp) => resp.json())
     .then((resp) => {
       const result = resp.results.bindings;
