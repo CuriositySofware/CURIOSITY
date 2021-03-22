@@ -121,7 +121,112 @@ const getArtifactById = (req = request, res = response) => {
     });
 };
 
+const getMuseums = (req, res = response) => {
+  const query = `${prefixs}SELECT DISTINCT ?label {
+    ?artifact ecrm:P50_has_current_keeper ?museum .
+    ?museum rdfs:label ?label
+    
+}`;
+
+  fetch(`http://localhost:3030/CURIOSITY/sparql`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+      accept: "application/sparql-results+json",
+    },
+    body: new URLSearchParams({
+      query,
+    }),
+  })
+    .then((resp) => resp.json())
+    .then((resp) => {
+      const result = resp.results.bindings.map((elem) => elem.label.value);
+      // Respuesta a la consulta
+      res.json({
+        ok: true,
+        result,
+      });
+    })
+    .catch((err) => {
+      res.status(404).json({
+        ok: false,
+        err,
+      });
+    });
+};
+
+const getArtifactByMuseum = (req, res = response) => {
+  const { museum } = req.query;
+
+  const query = `${prefixs}SELECT DISTINCT ?artifactLabel{
+    ?artifact ecrm:P50_has_current_keeper ?museum ;
+              rdfs:label ?artifactLabel .
+    ?museum rdfs:label ${museum} .
+    
+  }`;
+
+  fetch(`http://localhost:3030/CURIOSITY/sparql`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+      accept: "application/sparql-results+json",
+    },
+    body: new URLSearchParams({
+      query,
+    }),
+  })
+    .then((resp) => resp.json())
+    .then((resp) => {
+      const result = resp.results.bindings;
+      // Respuesta a la consulta
+      res.json({
+        ok: true,
+        result,
+      });
+    })
+    .catch((err) => {
+      res.status(404).json({
+        ok: false,
+        err,
+      });
+    });
+
+  //   const query = `${prefixs}SELECT DISTINCT ?label {
+  //     ?artifact ecrm:P50_has_current_keeper ?museum .
+  //     ?museum rdfs:label ?label
+
+  // }`;
+
+  //   fetch(`http://localhost:3030/CURIOSITY/sparql`, {
+  //     method: "POST",
+  //     headers: {
+  //       "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+  //       accept: "application/sparql-results+json",
+  //     },
+  //     body: new URLSearchParams({
+  //       query,
+  //     }),
+  //   })
+  //     .then((resp) => resp.json())
+  //     .then((resp) => {
+  //       const result = resp.results.bindings.map((elem) => elem.label.value);
+  //       // Respuesta a la consulta
+  //       res.json({
+  //         ok: true,
+  //         result,
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       res.status(404).json({
+  //         ok: false,
+  //         err,
+  //       });
+  //     });
+};
+
 module.exports = {
   consult,
   getArtifactById,
+  getMuseums,
+  getArtifactByMuseum,
 };
