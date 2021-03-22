@@ -190,38 +190,6 @@ const getArtifactByMuseum = (req, res = response) => {
         err,
       });
     });
-
-  //   const query = `${prefixs}SELECT DISTINCT ?label {
-  //     ?artifact ecrm:P50_has_current_keeper ?museum .
-  //     ?museum rdfs:label ?label
-
-  // }`;
-
-  //   fetch(`http://localhost:3030/CURIOSITY/sparql`, {
-  //     method: "POST",
-  //     headers: {
-  //       "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
-  //       accept: "application/sparql-results+json",
-  //     },
-  //     body: new URLSearchParams({
-  //       query,
-  //     }),
-  //   })
-  //     .then((resp) => resp.json())
-  //     .then((resp) => {
-  //       const result = resp.results.bindings.map((elem) => elem.label.value);
-  //       // Respuesta a la consulta
-  //       res.json({
-  //         ok: true,
-  //         result,
-  //       });
-  //     })
-  //     .catch((err) => {
-  //       res.status(404).json({
-  //         ok: false,
-  //         err,
-  //       });
-  //     });
 };
 
 module.exports = {
