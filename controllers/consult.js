@@ -11,7 +11,7 @@ const prefixs = `
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       `;
 
-const auth = Base64.encode("admin:B6KPu1hhhAuUwmQ");
+const auth = Base64.encode("admin:curiocity@2021");
 
 const consult = (req, res = response) => {
   const { author = "arte", material, place, title } = req.body;
@@ -243,7 +243,7 @@ const createArtifact = (req, res = response) => {
       <http://curiocity.org/${id}/Object> rdf:type ecrm:E22_Man-Made_Object ;
                                            ecrm:P48_has_preferred_identifier :${id} ;
                                            ecrm:P45_consists_of <http://curiocity.org/${id}/Material> ;
-                                           ecrm:P50_has_current_keeper ${location};
+                                           ecrm:P50_has_current_keeper <${location}>;
                                            rdfs:label "${title}" ;
                                            ecrm:P3_has_note "Test note" .
 
@@ -266,13 +266,13 @@ const createArtifact = (req, res = response) => {
       update,
     }),
   })
-    .then((resp) => resp.json())
-    .then((resp) =>
+    .then(() =>
       res.json({
         ok: true,
       })
     )
     .catch((err) => {
+      console.log(err);
       res.status(500).json({
         ok: false,
         err,
