@@ -14,17 +14,24 @@ const prefixs = `
 const auth = Base64.encode("admin:curiocity@2021");
 
 const consult = (req, res = response) => {
-  const { author = "arte", material, place, title } = req.body;
-
+  const { author, material, place, title, period } = req.body;
   // Query por el momento cableada
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
         ecrm:P14_carried_out_by ?creator .
+
     ?artifact rdfs:label ?labelArtifact ;
               ecrm:P45_consists_of ?material ;
               ecrm:P50_has_current_keeper ?keeper ;
               ecrm:P48_has_preferred_identifier ?idCode .
+
+    OPTIONAL {
+    ?prod ecrm:P4_has_time-span ?timespan .
+    ?period a ecrm:E4_Period ;
+        ecrm:P4_has_time-span ?timespan ;
+        rdfs:label ?period_l .
+    }
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
@@ -48,6 +55,11 @@ const consult = (req, res = response) => {
     ${
       place
         ? `FILTER( regex(lcase(?labelKeeper), "${place.toLowerCase()}" )) .`
+        : ""
+    }
+    ${
+      period
+        ? `FILTER( regex(lcase(?period_l), "${period.toLowerCase()}" )) .`
         : ""
     }
     
@@ -84,7 +96,7 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id
+  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
         ecrm:P48_has_preferred_identifier ?idCode ;
@@ -98,6 +110,13 @@ const getArtifactById = (req = request, res = response) => {
     ?idCode rdfs:label "${id}" . 
   	?prod ecrm:P108_has_produced ?artifact ;
          ecrm:P14_carried_out_by ?author .
+
+    OPTIONAL {
+    ?prod ecrm:P4_has_time-span ?timespan .
+    ?period a ecrm:E4_Period ;
+        ecrm:P4_has_time-span ?timespan ;
+        rdfs:label ?period_l .
+    }
   	?author rdfs:label ?authorLabel .
   }`;
 
@@ -230,7 +249,7 @@ const getArtifactByMuseum = (req, res = response) => {
 };
 
 const createArtifact = (req, res = response) => {
-  const { title, author, material, location } = req.body;
+  const { title, author, material, location, description } = req.body;
   const id = uuidv4();
 
   const authorUrl = encodeURIComponent(author);
@@ -245,7 +264,7 @@ const createArtifact = (req, res = response) => {
                                            ecrm:P45_consists_of <http://curiocity.org/${id}/Material> ;
                                            ecrm:P50_has_current_keeper <${location}>;
                                            rdfs:label "${title}" ;
-                                           ecrm:P3_has_note "Test note" .
+                                           ecrm:P3_has_note "${description}" .
 
       :${authorUrl} rdfs:label "${author}" .
       <http://curiocity.org/${id}/Production> rdf:type ecrm:E12_Production ;
@@ -266,7 +285,7 @@ const createArtifact = (req, res = response) => {
       update,
     }),
   })
-    .then(() =>
+    .then((resp) =>
       res.json({
         ok: true,
       })
