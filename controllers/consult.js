@@ -79,6 +79,7 @@ const consult = (req, res = response) => {
     .then((resp) => resp.json())
     .then((resp) => {
       const result = resp.results.bindings;
+      console.log(result);
       // Respuesta a la consulta
       res.json({
         ok: true,
@@ -96,6 +97,7 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
+  console.log(id);
   const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
@@ -103,11 +105,9 @@ const getArtifactById = (req = request, res = response) => {
     		ecrm:P3_has_note ?note ;
     		rdfs:label ?artifactLabel ;
       	ecrm:P50_has_current_keeper ?keeper ;
-        ecrm:P55_has_current_location ?location ;
     		ecrm:P45_consists_of ?material .
     
     ?material rdfs:label ?materialLabel .
-    ?location rdfs:label ?locationLabel .
     ?keeper rdfs:label ?keeperLabel .
     ?idCode rdfs:label "${id}" . 
   	?prod ecrm:P108_has_produced ?artifact ;
@@ -118,9 +118,13 @@ const getArtifactById = (req = request, res = response) => {
     ?period a ecrm:E4_Period ;
         ecrm:P4_has_time-span ?timespan ;
         rdfs:label ?period_l .
+    ?artifact ecrm:P55_has_current_location ?location .
+    ?location rdfs:label ?locationLabel .
     }
   	?author rdfs:label ?authorLabel .
   }`;
+
+  console.log(query);
 
   fetch(`${process.env.URL_JENA}/sparql`, {
     method: "POST",
