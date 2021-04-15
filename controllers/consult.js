@@ -96,16 +96,18 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l
+  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
         ecrm:P48_has_preferred_identifier ?idCode ;
     		ecrm:P3_has_note ?note ;
     		rdfs:label ?artifactLabel ;
-      		ecrm:P50_has_current_keeper ?keeper ;
+      	ecrm:P50_has_current_keeper ?keeper ;
+        ecrm:P55_has_current_location ?location ;
     		ecrm:P45_consists_of ?material .
     
     ?material rdfs:label ?materialLabel .
+    ?location rdfs:label ?locationLabel .
     ?keeper rdfs:label ?keeperLabel .
     ?idCode rdfs:label "${id}" . 
   	?prod ecrm:P108_has_produced ?artifact ;
@@ -186,13 +188,13 @@ const getMuseums = (req, res = response) => {
 };
 
 const getArtifactByMuseum = (req, res = response) => {
-  const { museum } = req.query;
-  if (!museum)
+  const { label } = req.query;
+  if (!label)
     return res
       .status(404)
-      .json({ ok: false, err: 'query param "museum" is missing.' });
+      .json({ ok: false, err: 'query param "label" is missing.' });
 
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?note ?id
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?note ?id ?labelLocation
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
           ecrm:P14_carried_out_by ?creator .
@@ -200,20 +202,16 @@ const getArtifactByMuseum = (req, res = response) => {
               ecrm:P45_consists_of ?material ;
               ecrm:P3_has_note ?note ;
               ecrm:P50_has_current_keeper ?keeper ;
+              ecrm:P55_has_current_location ?location ;
               ecrm:P48_has_preferred_identifier ?idCode .
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
-    ?keeper rdfs:label ${museum} .
+    ?location rdfs:label ?labelLocation .
+    ?keeper rdfs:label ${label} .
     ?creator rdfs:label ?labelCreator .
   }
     `;
-  const query2 = `${prefixs}SELECT DISTINCT ?artifactLabel{
-    ?artifact ecrm:P50_has_current_keeper ?museum ;
-              rdfs:label ?artifactLabel .
-    ?museum rdfs:label ${museum} .
-    
-  }`;
 
   fetch(`${process.env.URL_JENA}/sparql`, {
     method: "POST",

@@ -11,9 +11,9 @@ const router = Router();
 
 // Endpoint para consultar una query
 router.post("/consult", consult);
-router.get("/consult/:id", getArtifactById);
+router.get("/artifact/:id", getArtifactById);
 router.get("/museums", getMuseums);
-router.get("/artifacts", getArtifactByMuseum);
+router.get("/museum", getArtifactByMuseum);
 router.post("/create", createArtifact);
 
 module.exports = router;
