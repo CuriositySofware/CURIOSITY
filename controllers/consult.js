@@ -1,6 +1,7 @@
 const { response, request } = require("express");
 const { Base64 } = require("js-base64");
 const fetch = require("node-fetch");
+const lodash = require("lodash");
 const { v4: uuidv4 } = require("uuid");
 
 const prefixs = `
@@ -124,8 +125,6 @@ const getArtifactById = (req = request, res = response) => {
   	?author rdfs:label ?authorLabel .
   }`;
 
-  console.log(query);
-
   fetch(`${process.env.URL_JENA}/sparql`, {
     method: "POST",
     headers: {
@@ -154,9 +153,11 @@ const getArtifactById = (req = request, res = response) => {
 };
 
 const getMuseums = (req, res = response) => {
-  const query = `${prefixs}SELECT DISTINCT ?label ?museum {
-    ?artifact ecrm:P50_has_current_keeper ?museum .
-    ?museum rdfs:label ?label
+  const query = `${prefixs}SELECT DISTINCT ?labelMuseum ?labelLocation ?museum {
+    ?artifact ecrm:P50_has_current_keeper ?museum ;
+              ecrm:P55_has_current_location ?location .
+    ?location rdfs:label ?labelLocation .
+    ?museum rdfs:label ?labelMuseum .
     
 }`;
 
@@ -172,18 +173,37 @@ const getMuseums = (req, res = response) => {
   })
     .then((resp) => resp.json())
     .then((resp) => {
-      const result = resp.results.bindings.map((museum) => {
+      const format = resp.results.bindings.map((museum) => {
         let newObj = {};
         Object.keys(museum).forEach((key) => (newObj[key] = museum[key].value));
         return newObj;
       });
+
+      const groupBymuseum = lodash.groupBy(format, "labelMuseum");
+
+      const getRooms = (museum_arr) => {
+        let rooms = [];
+        museum_arr.forEach((elem) => rooms.push(elem["labelLocation"]));
+        return rooms;
+      };
+
+      Object.keys(groupBymuseum).forEach(
+        (key) =>
+          (groupBymuseum[key] = {
+            museum: groupBymuseum[key][0]["museum"],
+            label: groupBymuseum[key][0]["labelMuseum"],
+            rooms: getRooms(groupBymuseum[key]),
+          })
+      );
+
       // Respuesta a la consulta
       res.json({
         ok: true,
-        result,
+        result: Object.values(groupBymuseum),
       });
     })
     .catch((err) => {
+      console.log(err);
       res.status(404).json({
         ok: false,
         err,
