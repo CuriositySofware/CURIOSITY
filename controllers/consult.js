@@ -16,6 +16,7 @@ const auth = Base64.encode("admin:curiocity@2021");
 
 const consult = (req, res = response) => {
   const { author, material, place, title, period } = req.body;
+  console.log(place);
   // Query por el momento cableada
   const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l
   WHERE {
@@ -98,7 +99,6 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  console.log(id);
   const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
