@@ -38,7 +38,7 @@ const consult = (req, res = response) => {
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
     ?keeper rdfs:label ?labelKeeper .
-    OPTIONAL {?creator rdfs:label ?labelCreator .}
+    OPTIONAL {?creator rdfs:label ?labelCreator } .
     ${
       author
         ? `FILTER( regex(lcase(?labelCreator), "${author.toLowerCase()}" )) .`
@@ -99,7 +99,6 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  console.log(id);
   const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
@@ -234,7 +233,7 @@ const getArtifactByMuseum = (req, res = response) => {
     ?material rdfs:label ?labelMaterial .
     ?location rdfs:label ?labelLocation .
     ?keeper rdfs:label ${label} .
-    OPTIONAL {?creator rdfs:label ?labelCreator .}
+    OPTIONAL {?creator rdfs:label ?labelCreator } .
   }
     `;
 
@@ -250,9 +249,13 @@ const getArtifactByMuseum = (req, res = response) => {
   })
     .then((resp) => resp.json())
     .then((resp) => {
-      const result = resp.results.bindings.map((art) => {
+      let result = resp.results.bindings.map((art) => {
         let newObj = {};
         Object.keys(art).forEach((key) => (newObj[key] = art[key].value));
+
+        if (!newObj.labelCreator) {
+          newObj["labelCreator"] = "Desconocido";
+        }
         return newObj;
       });
 
