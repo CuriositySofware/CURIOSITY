@@ -16,6 +16,7 @@ const auth = Base64.encode("admin:curiocity@2021");
 
 const consult = (req, res = response) => {
   const { author, material, place, title, period } = req.body;
+  console.log(place);
   // Query por el momento cableada
   const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l
   WHERE {
@@ -37,7 +38,7 @@ const consult = (req, res = response) => {
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
     ?keeper rdfs:label ?labelKeeper .
-    ?creator rdfs:label ?labelCreator .
+    OPTIONAL {?creator rdfs:label ?labelCreator .}
     ${
       author
         ? `FILTER( regex(lcase(?labelCreator), "${author.toLowerCase()}" )) .`
@@ -121,8 +122,8 @@ const getArtifactById = (req = request, res = response) => {
         rdfs:label ?period_l .
     ?artifact ecrm:P55_has_current_location ?location .
     ?location rdfs:label ?locationLabel .
-    }
   	?author rdfs:label ?authorLabel .
+    }
   }`;
 
   fetch(`${process.env.URL_JENA}/sparql`, {
@@ -233,7 +234,7 @@ const getArtifactByMuseum = (req, res = response) => {
     ?material rdfs:label ?labelMaterial .
     ?location rdfs:label ?labelLocation .
     ?keeper rdfs:label ${label} .
-    ?creator rdfs:label ?labelCreator .
+    OPTIONAL {?creator rdfs:label ?labelCreator .}
   }
     `;
 
