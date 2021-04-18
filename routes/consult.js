@@ -5,6 +5,7 @@ const {
   getMuseums,
   getArtifactByMuseum,
   createArtifact,
+  updateArtifact,
 } = require("../controllers/consult");
 
 const router = Router();
@@ -15,5 +16,6 @@ router.get("/artifact/:id", getArtifactById);
 router.get("/museums", getMuseums);
 router.get("/museum", getArtifactByMuseum);
 router.post("/create", createArtifact);
+router.put("/update/:id", updateArtifact);
 
 module.exports = router;

@@ -15,10 +15,17 @@ const prefixs = `
 const auth = Base64.encode("admin:curiocity@2021");
 
 const consult = (req, res = response) => {
-  const { author, material, place, title, period } = req.body;
-  console.log(place);
+  const {
+    author,
+    material,
+    place,
+    title,
+    period,
+    status = "Verified",
+  } = req.body;
+
   // Query por el momento cableada
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l ?note
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
         ecrm:P14_carried_out_by ?creator .
@@ -26,7 +33,9 @@ const consult = (req, res = response) => {
     ?artifact rdfs:label ?labelArtifact ;
               ecrm:P45_consists_of ?material ;
               ecrm:P50_has_current_keeper ?keeper ;
-              ecrm:P48_has_preferred_identifier ?idCode .
+              ecrm:P48_has_preferred_identifier ?idCode ;
+              ecrm:P3_has_note ?note ;
+              ecrm:P2_has_type :${status} .
 
     OPTIONAL {
     ?prod ecrm:P4_has_time-span ?timespan .
@@ -81,7 +90,6 @@ const consult = (req, res = response) => {
     .then((resp) => resp.json())
     .then((resp) => {
       const result = resp.results.bindings;
-      console.log(result);
       // Respuesta a la consulta
       res.json({
         ok: true,
@@ -227,7 +235,8 @@ const getArtifactByMuseum = (req, res = response) => {
               ecrm:P3_has_note ?note ;
               ecrm:P50_has_current_keeper ?keeper ;
               ecrm:P55_has_current_location ?location ;
-              ecrm:P48_has_preferred_identifier ?idCode .
+              ecrm:P48_has_preferred_identifier ?idCode ;
+              ecrm:P2_has_type :Verified .
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
@@ -290,7 +299,8 @@ const createArtifact = (req, res = response) => {
                                            ecrm:P45_consists_of <http://curiocity.org/${id}/Material> ;
                                            ecrm:P50_has_current_keeper <${location}>;
                                            rdfs:label "${title}" ;
-                                           ecrm:P3_has_note "${description}" .
+                                           ecrm:P3_has_note "${description}" ;
+                                           ecrm:P2_has_type :Unverified .
 
       :${authorUrl} rdfs:label "${author}" .
       <http://curiocity.org/${id}/Production> rdf:type ecrm:E12_Production ;
@@ -325,10 +335,55 @@ const createArtifact = (req, res = response) => {
     });
 };
 
+const updateArtifact = (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body;
+  let update = prefixs;
+  if (action === "approved") {
+    update += `
+    DELETE {
+      ?artifact ecrm:P2_has_type :Unverified .
+    }
+    INSERT {
+      ?artifact ecrm:P2_has_type :Verified .
+    }
+    WHERE {
+      ?artifact ecrm:P48_has_preferred_identifier ?idCode .
+        ?idCode rdfs:label "${id}" .
+    }
+    `;
+  }
+
+  fetch(`${process.env.URL_JENA}/update`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+      accept: "application/sparql-results+json",
+      Authorization: `Basic ${auth}`,
+    },
+    body: new URLSearchParams({
+      update,
+    }),
+  })
+    .then((resp) =>
+      res.json({
+        ok: true,
+      })
+    )
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        ok: false,
+        err,
+      });
+    });
+};
+
 module.exports = {
   consult,
   getArtifactById,
   getMuseums,
   getArtifactByMuseum,
   createArtifact,
+  updateArtifact,
 };
