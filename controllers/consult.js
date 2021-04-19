@@ -1,4 +1,4 @@
-const { response, request } = require("express");
+const { response, request, json } = require("express");
 const { Base64 } = require("js-base64");
 const fetch = require("node-fetch");
 const lodash = require("lodash");
@@ -25,7 +25,7 @@ const consult = (req, res = response) => {
   } = req.body;
 
   // Query por el momento cableada
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l ?note
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?id ?period_l ?note ?keeper
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
         ecrm:P14_carried_out_by ?creator .
@@ -107,7 +107,6 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  console.log(id);
   const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
@@ -340,7 +339,20 @@ const createArtifact = (req, res = response) => {
 
 const updateArtifact = (req, res) => {
   const { id } = req.params;
-  const { action } = req.body;
+  const { action, info } = req.body;
+  if (!info) {
+    return json.status(400).json({
+      ok: false,
+      message: "application info is required",
+    });
+  }
+  const material = info.labelMaterial.value;
+  const location = info.keeper.value;
+  const title = info.labelArtifact.value;
+  const description = info.note.value;
+  const author = info.labelCreator.value;
+  const authorUrl = encodeURIComponent(author);
+
   let update = prefixs;
   if (action === "approved") {
     update += `
@@ -355,6 +367,31 @@ const updateArtifact = (req, res) => {
         ?idCode rdfs:label "${id}" .
     }
     `;
+  } else if (action === "declined") {
+    update += `
+      DELETE WHERE{
+              :${id} rdf:type ecrm:E42_Identifier ;
+              rdfs:label "${id}" .
+      <http://curiocity.org/${id}/Material> rdf:type ecrm:E57_Material ;
+                                             rdfs:label "${material}" .
+      <http://curiocity.org/${id}/Object> rdf:type ecrm:E22_Man-Made_Object ;
+                                           ecrm:P48_has_preferred_identifier :${id} ;
+                                           ecrm:P45_consists_of <http://curiocity.org/${id}/Material> ;
+                                           ecrm:P50_has_current_keeper <${location}>;
+                                           rdfs:label "${title}" ;
+                                           ecrm:P3_has_note "${description}" ;
+                                           ecrm:P2_has_type :Unverified .
+
+      <http://curiocity.org/${id}/Production> rdf:type ecrm:E12_Production ;
+                                               ecrm:P14_carried_out_by :${authorUrl};
+                                               ecrm:P108_has_produced <http://curiocity.org/${id}/Object> .
+      }
+    `;
+  } else {
+    return res.status(400).json({
+      ok: false,
+      message: 'action type unhandled must be "approved" or "declined"',
+    });
   }
 
   fetch(`${process.env.URL_JENA}/update`, {
@@ -368,11 +405,11 @@ const updateArtifact = (req, res) => {
       update,
     }),
   })
-    .then((resp) =>
-      res.json({
+    .then((resp) => {
+      return res.json({
         ok: true,
-      })
-    )
+      });
+    })
     .catch((err) => {
       console.log(err);
       res.status(500).json({
