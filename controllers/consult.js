@@ -107,6 +107,7 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
+  console.log(id);
   const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
@@ -129,8 +130,10 @@ const getArtifactById = (req = request, res = response) => {
         rdfs:label ?period_l .
     ?artifact ecrm:P55_has_current_location ?location .
     ?location rdfs:label ?locationLabel .
-  	?author rdfs:label ?authorLabel .
     }
+
+    OPTIONAL {?author rdfs:label ?authorLabel .}
+  	
   }`;
 
   fetch(`${process.env.URL_JENA}/sparql`, {
