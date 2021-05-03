@@ -43,6 +43,9 @@ const consult = (req, res = response) => {
         ecrm:P4_has_time-span ?timespan ;
         rdfs:label ?period_l .
     }
+
+    OPTIONAL{?process :L1_digitized ?artifact ;
+      :L20_has_created/:T2_has_file_name ?filename .}
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
@@ -107,7 +110,7 @@ const consult = (req, res = response) => {
 
 const getArtifactById = (req = request, res = response) => {
   const { id } = req.params;
-  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel
+  const query = `${prefixs} SELECT ?artifactLabel ?note ?artifactLabel ?materialLabel ?keeperLabel ?authorLabel ?id ?period_l ?locationLabel ?filename
   WHERE {
     ?artifact a ecrm:E22_Man-Made_Object ;
         ecrm:P48_has_preferred_identifier ?idCode ;
@@ -132,6 +135,9 @@ const getArtifactById = (req = request, res = response) => {
     }
 
     OPTIONAL {?author rdfs:label ?authorLabel .}
+
+    OPTIONAL{?process :L1_digitized ?artifact ;
+      :L20_has_created/:T2_has_file_name ?filename .}
   	
   }`;
 
@@ -228,7 +234,7 @@ const getArtifactByMuseum = (req, res = response) => {
       .status(404)
       .json({ ok: false, err: 'query param "label" is missing.' });
 
-  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?note ?id ?labelLocation
+  const query = `${prefixs} SELECT ?labelArtifact ?labelMaterial ?labelKeeper ?labelCreator ?note ?id ?labelLocation ?filename
   WHERE {
     ?prod ecrm:P108_has_produced ?artifact ;
           ecrm:P14_carried_out_by ?creator .
@@ -239,6 +245,9 @@ const getArtifactByMuseum = (req, res = response) => {
               ecrm:P55_has_current_location ?location ;
               ecrm:P48_has_preferred_identifier ?idCode ;
               ecrm:P2_has_type :Verified .
+    
+    OPTIONAL{?process :L1_digitized ?artifact ;
+        :L20_has_created/:T2_has_file_name ?filename .}
       
     ?idCode rdfs:label ?id .          
     ?material rdfs:label ?labelMaterial .
