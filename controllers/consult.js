@@ -435,4 +435,5 @@ module.exports = {
   getArtifactByMuseum,
   createArtifact,
   updateArtifact,
+  prefixs
 };
