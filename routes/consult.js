@@ -18,6 +18,6 @@ router.get("/museums", getMuseums);
 router.get("/museum", getArtifactByMuseum);
 router.post("/create", createArtifact);
 router.put("/update/:id", updateArtifact);
-router.get("/image", getImage);
+router.get("/image/:id", getImage);
 
 module.exports = router;

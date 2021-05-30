@@ -6,7 +6,7 @@ const { prefixs } = require("../controllers/consult");
 
 const getImage = async (req, res) => {
   const notFoundImage = path.join(__dirname, "../assets/no-image.jpg");
-  const id = req.body.id;
+  const id = req.params.id;
 
   if (!id) {
     return res.status(403).send("Bad request");
