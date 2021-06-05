@@ -5,7 +5,7 @@ const fs = require("fs");
 const { prefixs } = require("../controllers/consult");
 
 const getImage = async (req, res) => {
-  const notFoundImage = path.join(__dirname, "../assets/no-image.jpg");
+ 
   const id = req.params.id;
 
   if (!id) {
@@ -48,9 +48,12 @@ const getImage = async (req, res) => {
 
       fs.stat(pathImage, (error) => {
         if (error) {
-          res.status(404).sendFile(notFoundImage);
+          res.status(404).send.json({
+            ok: false,
+            error,
+          });
         } else {
-          res.sendFile(pathImage);
+          res.status(200).sendFile(pathImage);
         }
       });
     })
