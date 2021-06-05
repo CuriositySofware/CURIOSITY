@@ -8,7 +8,6 @@ const path = require("path");
 const app = express();
 
 app.use(express.static(path.join(__dirname, "build")));
-app.use(express.static(path.join(__dirname, "assets")))
 
 app.use(cors());
 app.use(express.json());

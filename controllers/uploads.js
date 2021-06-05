@@ -48,7 +48,7 @@ const getImage = async (req, res) => {
 
       fs.stat(pathImage, (error) => {
         if (error) {
-          res.status(404).send.json({
+          res.status(404).json({
             ok: false,
             error,
           });
