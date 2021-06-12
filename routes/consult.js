@@ -8,9 +8,9 @@ const {
   updateArtifact,
 } = require("../controllers/consult");
 const { getImage } = require("../controllers/uploads");
-const {registerUser} = require('../controllers/users/register');
-const {encryptPassword} = require('../controllers/middleware/password');
-
+const { registerUser } = require("../controllers/users/register");
+const { loginUser } = require("../controllers/users/login");
+const { encryptPassword } = require("../controllers/middleware/password");
 
 const router = Router();
 
@@ -22,6 +22,7 @@ router.get("/museum", getArtifactByMuseum);
 router.post("/create", createArtifact);
 router.put("/update/:id", updateArtifact);
 router.get("/image/:id", getImage);
-router.post("/users/new_user",encryptPassword, registerUser)
+router.post("/users/new_user", encryptPassword, registerUser);
+router.post("/users/login", loginUser);
 
 module.exports = router;

@@ -1,6 +1,9 @@
 const fetch = require("node-fetch");
 const { Base64 } = require("js-base64");
 const { userExists, user_prefixs } = require("./utils");
+const AuthUtils = require("../auth/utils");
+const validator = require("email-validator");
+require("dotenv").config();
 
 const auth = Base64.encode("admin:curiocity@2021");
 
@@ -14,14 +17,23 @@ const registerUser = async (req, res) => {
     !req.body.email ||
     !req.body.first_name ||
     !req.body.last_name ||
-    !req.body.password
+    !req.body.password || 
+    !req.body.type
   ) {
     return res.status(400).json({
       message: "Todos los campos son necesarios",
     });
   }
 
-  const { email, first_name, last_name, password } = req.body;
+  const { email, first_name, last_name, password, type } = req.body;
+
+  if (!validator.validate(req.body.email)) {
+    return res.status(401).json({
+      ok: false,
+      message: "Se requiere un email válido",
+    });
+  }
+
   const id_user = email.replace("@", "");
 
   const verifyExistence = await userExists(id_user);
@@ -50,7 +62,7 @@ const registerUser = async (req, res) => {
     INSERT DATA {
     :${id_user}-profile rdf:type owl:NamedIndividual,
                             :Profile ;
-                            :has_user_type :visitor ;
+                            :has_user_type :${type === "admin" ? "admin" : "visitor"} ;
                             ecrm:P48_has_preferred_identifier :${id_user} ;
                             :email "${email}" ;
                             :first_name "${first_name}" ;
@@ -72,10 +84,17 @@ const registerUser = async (req, res) => {
   })
     .then((resp) => {
       if (resp.status === 200) {
+        //Update user info
+        req.body.password = undefined;
+        req.body.type = req.body.type === "admin" ? "admin" : "visitor";
+        //Gen token
+        const token = AuthUtils.createUserToken(email, res);
         return res.status(200).json({
           ok: true,
           registered: true,
-          message: "Usuario registrado!",
+          message: "¡Usuario registrado!",
+          user: req.body,
+          token,
         });
       }
       return res.status(400).json({
@@ -88,7 +107,8 @@ const registerUser = async (req, res) => {
       console.log(err);
       res.status(404).json({
         ok: false,
-        err,
+        registered: false,
+        message: err,
       });
     });
 };

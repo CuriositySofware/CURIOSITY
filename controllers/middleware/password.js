@@ -5,7 +5,7 @@ const encryptPassword = async (req, res, next) => {
   if (!password) {
     return res.status(400).json({
       ok: false,
-      err: "La contraseña es requerida",
+      message: "La contraseña es requerida",
     });
   }
   const salt = await bcrypt.genSalt(10);
