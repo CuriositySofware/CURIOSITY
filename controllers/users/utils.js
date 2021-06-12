@@ -73,12 +73,14 @@ const userData = async (email) => {
     .then((resp) => resp.json())
     .then((resp) => {
       const result = resp.results.bindings;
-      if (result) {
+      if (result && result.length > 0) {
         return {
           ok: true,
           first_name: result[0].first_name.value,
           last_name: result[0].last_name.value,
-          type: result[0].user_type.value.includes("visitor") ? "visitor" : "admin",
+          type: result[0].user_type.value.includes("visitor")
+            ? "visitor"
+            : "admin",
           password: result[0].password.value,
         };
       }
