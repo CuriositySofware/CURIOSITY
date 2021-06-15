@@ -14,12 +14,12 @@ exports.createUserToken = (id, res) => {
   d.setDate(d.getDate() + 30);
 
   //cookie settings
-  res.cookie("jwt", token, {
+  /*   res.cookie("jwt", token, {
     expires: d,
     httpOnly: true,
     // secure: req.secure || req.headers["x-forwarded-proto"] === "https",
     sameSite: "none",
-  });
+  }); */
 
   return token;
 };

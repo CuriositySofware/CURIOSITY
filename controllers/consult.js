@@ -3,6 +3,7 @@ const { Base64 } = require("js-base64");
 const fetch = require("node-fetch");
 const lodash = require("lodash");
 const { v4: uuidv4 } = require("uuid");
+const { userData } = require("./users/utils");
 
 const prefixs = `
         PREFIX ecrm: <http://erlangen-crm.org/170309/>
@@ -294,11 +295,19 @@ const getArtifactByMuseum = (req, res = response) => {
     });
 };
 
-const createArtifact = (req, res = response) => {
+const createArtifact = async (req, res = response) => {
   const { title, author, material, location, description } = req.body;
   const id = uuidv4();
 
   const authorUrl = encodeURIComponent(author);
+  const userInfo = await userData(req.user);
+  if (!userInfo.ok) {
+    return res.status(500).json({
+      ok: false,
+      message: userInfo.message,
+    });
+  }
+  const type = userInfo.type === "admin" ? "Verified" : "Unverified";
 
   const update = `${prefixs} INSERT DATA {
       :${id} rdf:type ecrm:E42_Identifier ;
@@ -311,7 +320,7 @@ const createArtifact = (req, res = response) => {
                                            ecrm:P50_has_current_keeper <${location}>;
                                            rdfs:label "${title}" ;
                                            ecrm:P3_has_note "${description}" ;
-                                           ecrm:P2_has_type :Unverified .
+                                           ecrm:P2_has_type :${type} .
 
       :${authorUrl} rdfs:label "${author}" .
       <http://curiocity.org/${id}/Production> rdf:type ecrm:E12_Production ;
@@ -346,7 +355,7 @@ const createArtifact = (req, res = response) => {
     });
 };
 
-const updateArtifact = (req, res) => {
+const updateArtifact = async (req, res) => {
   const { id } = req.params;
   const { action, info } = req.body;
   if (!info) {
@@ -355,6 +364,21 @@ const updateArtifact = (req, res) => {
       message: "application info is required",
     });
   }
+
+  const userInfo = await userData(req.user);
+  if (!userInfo.ok) {
+    return res.status(500).json({
+      ok: false,
+      message: userInfo.message,
+    });
+  }
+  if (userInfo.type !== "admin") {
+    return res.status(401).json({
+      ok: false,
+      message: "El usuario no tiene privilegios para aprobar obras",
+    });
+  }
+
   const material = info.labelMaterial.value;
   const location = info.keeper.value;
   const title = info.labelArtifact.value;
