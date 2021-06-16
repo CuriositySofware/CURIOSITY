@@ -357,9 +357,10 @@ const createArtifact = async (req, res = response) => {
 
 const updateArtifact = async (req, res) => {
   const { id } = req.params;
+
   const { action, info } = req.body;
   if (!info) {
-    return json.status(400).json({
+    return res.status(400).json({
       ok: false,
       message: "application info is required",
     });
