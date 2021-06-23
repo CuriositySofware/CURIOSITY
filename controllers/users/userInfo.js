@@ -32,41 +32,27 @@ const userEdit = async (req, res) => {
       message: "Se requiere el email del usuario a editar",
     });
   }
-  if (!req.body.first_name || !req.body.last_name || !req.body.type) {
+  if (!req.body.first_name || !req.body.last_name) {
     return res.status(400).json({
       ok: false,
       message: "Todos los campos son necesarios",
     });
   }
 
-  const { first_name, last_name, type } = req.body;
+  const { first_name, last_name } = req.body;
 
-  if (type !== "visitor" && type !== "admin") {
-    return res.status(403).json({
-      ok: false,
-      message: "El tipo de usuario es invalido",
-    });
-  }
-  const adminInfo = await userData(requester_email);
   const userInfo = await userData(email);
-  if (!adminInfo.ok || !userInfo.ok) {
+  if (!userInfo.ok) {
     return res.status(500).json({
       ok: false,
       message: "Ha ocurrido un error",
     });
   }
 
-  if (email !== requester_email && adminInfo.type !== "admin") {
+  if (email !== requester_email) {
     return res.status(401).json({
       ok: false,
       message: "Solo se puede editar el propio usuario",
-    });
-  }
-
-  if (type !== userInfo.type && adminInfo.type !== "admin") {
-    return res.status(401).json({
-      ok: false,
-      message: "No tiene permisos necesarios para cambiar el tipo de usuario",
     });
   }
 
@@ -76,12 +62,10 @@ const userEdit = async (req, res) => {
     DELETE {
       ?user :first_name "${userInfo.first_name}".
       ?user :last_name "${userInfo.last_name}".
-      ?user :has_user_type :${userInfo.type}.
       }
     INSERT {
       ?user :first_name "${first_name}".
       ?user :last_name "${last_name}".
-      ?user :has_user_type :${type}.
       }
     WHERE{
       ?user :email "${email}" .
