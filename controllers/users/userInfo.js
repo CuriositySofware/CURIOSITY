@@ -49,16 +49,10 @@ const userEdit = async (req, res) => {
   }
   const adminInfo = await userData(requester_email);
   const userInfo = await userData(email);
-  if (!adminInfo.ok) {
+  if (!adminInfo.ok || !userInfo.ok) {
     return res.status(500).json({
       ok: false,
-      message: adminInfo.message,
-    });
-  }
-  if (!userInfo.ok) {
-    return res.status(500).json({
-      ok: false,
-      message: userInfo.message,
+      message: "Ha ocurrido un error",
     });
   }
 
