@@ -98,9 +98,10 @@ const userEdit = async (req, res) => {
       update,
     }),
   })
-    .then((resp) => {
+    .then(async (resp) => {
       if (resp.status === 200) {
         const newInfo = await userData(email);
+        delete newInfo["password"];
         //Update user info
         return res.status(200).json({
           ok: true,
