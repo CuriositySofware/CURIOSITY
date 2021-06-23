@@ -100,12 +100,12 @@ const userEdit = async (req, res) => {
   })
     .then((resp) => {
       if (resp.status === 200) {
-        console.log(resp);
+        const newInfo = await userData(email);
         //Update user info
         return res.status(200).json({
           ok: true,
           message: "¡Información actualizada!",
-          user: req.body,
+          user: newInfo,
         });
       }
       return res.status(400).json({
