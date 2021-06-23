@@ -38,6 +38,12 @@ const userEdit = async (req, res) => {
       message: "Todos los campos son necesarios",
     });
   }
+  if (email !== requester_email) {
+    return res.status(401).json({
+      ok: false,
+      message: "Solo se puede editar el propio usuario",
+    });
+  }
 
   const { first_name, last_name } = req.body;
 
@@ -46,13 +52,6 @@ const userEdit = async (req, res) => {
     return res.status(500).json({
       ok: false,
       message: "Ha ocurrido un error",
-    });
-  }
-
-  if (email !== requester_email) {
-    return res.status(401).json({
-      ok: false,
-      message: "Solo se puede editar el propio usuario",
     });
   }
 
