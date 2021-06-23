@@ -11,7 +11,7 @@ const {
 const { getImage } = require("../controllers/uploads");
 const { registerUser } = require("../controllers/users/register");
 const { loginUser } = require("../controllers/users/login");
-const { userInfo } = require("../controllers/users/userInfo");
+const { userInfo, userEdit } = require("../controllers/users/userInfo");
 const { encryptPassword } = require("../controllers/middleware/password");
 const { verifyToken } = require("../controllers/middleware/verify_token");
 
@@ -28,5 +28,6 @@ router.get("/image/:id", getImage);
 router.post("/users/new_user", encryptPassword, registerUser);
 router.post("/users/login", loginUser);
 router.get("/users/user_info", verifyToken, userInfo);
+router.put("/users/update/:email", verifyToken, userEdit);
 
 module.exports = router;

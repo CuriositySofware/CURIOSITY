@@ -10,6 +10,7 @@ const auth = Base64.encode("admin:curiocity@2021");
 const registerUser = async (req, res) => {
   if (Object.keys(req.body).length === 0) {
     return res.status(400).json({
+      ok: false,
       message: "No se encontro cuerpo de la consulta",
     });
   }
@@ -17,10 +18,11 @@ const registerUser = async (req, res) => {
     !req.body.email ||
     !req.body.first_name ||
     !req.body.last_name ||
-    !req.body.password || 
+    !req.body.password ||
     !req.body.type
   ) {
     return res.status(400).json({
+      ok: false,
       message: "Todos los campos son necesarios",
     });
   }
@@ -62,7 +64,9 @@ const registerUser = async (req, res) => {
     INSERT DATA {
     :${id_user}-profile rdf:type owl:NamedIndividual,
                             :Profile ;
-                            :has_user_type :${type === "admin" ? "admin" : "visitor"} ;
+                            :has_user_type :${
+                              type === "admin" ? "admin" : "visitor"
+                            } ;
                             ecrm:P48_has_preferred_identifier :${id_user} ;
                             :email "${email}" ;
                             :first_name "${first_name}" ;
