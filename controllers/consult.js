@@ -297,6 +297,18 @@ const getArtifactByMuseum = (req, res = response) => {
 };
 
 const createArtifact = async (req, res = response) => {
+  if (
+    !req.body.title ||
+    !req.body.author ||
+    !req.body.material ||
+    !req.body.location ||
+    !req.body.description
+  ) {
+    return res.status(400).json({
+      ok: false,
+      message: "Todos los campos son requeridos",
+    });
+  }
   const userInfo = await userData(req.user);
   if (!userInfo.ok) {
     return res.status(500).json({
@@ -383,7 +395,11 @@ const updateArtifact = async (req, res) => {
   })
     .then(async (resp) => {
       if (action === "approved") {
-        const result = await createArtifactUtil({ ...newInfo, type: "Verified", prevId: id });
+        const result = await createArtifactUtil({
+          ...newInfo,
+          type: "Verified",
+          prevId: id,
+        });
         return res.json(result);
       }
       return res.json({
