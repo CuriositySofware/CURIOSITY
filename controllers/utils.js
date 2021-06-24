@@ -14,7 +14,7 @@ const createArtifactUtil = (new_artifact) => {
   const { title, author, material, location, description, type, prevId } =
     new_artifact;
 
-  const id = prevId ?? uuidv4();
+  const id = prevId ? prevId : uuidv4();
   const authorUrl = encodeURIComponent(author);
   const update = `${prefixs} INSERT DATA {
         :${id} rdf:type ecrm:E42_Identifier ;
