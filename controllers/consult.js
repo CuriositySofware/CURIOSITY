@@ -2,8 +2,9 @@ const { response, request, json } = require("express");
 const { Base64 } = require("js-base64");
 const fetch = require("node-fetch");
 const lodash = require("lodash");
-const { v4: uuidv4 } = require("uuid");
+
 const { userData } = require("./users/utils");
+const { createArtifactUtil } = require("./utils");
 
 const prefixs = `
         PREFIX ecrm: <http://erlangen-crm.org/170309/>
@@ -296,10 +297,6 @@ const getArtifactByMuseum = (req, res = response) => {
 };
 
 const createArtifact = async (req, res = response) => {
-  const { title, author, material, location, description } = req.body;
-  const id = uuidv4();
-
-  const authorUrl = encodeURIComponent(author);
   const userInfo = await userData(req.user);
   if (!userInfo.ok) {
     return res.status(500).json({
@@ -308,58 +305,16 @@ const createArtifact = async (req, res = response) => {
     });
   }
   const type = userInfo.type === "admin" ? "Verified" : "Unverified";
-
-  const update = `${prefixs} INSERT DATA {
-      :${id} rdf:type ecrm:E42_Identifier ;
-              rdfs:label "${id}" .
-      <http://curiocity.org/${id}/Material> rdf:type ecrm:E57_Material ;
-                                             rdfs:label "${material}" .
-      <http://curiocity.org/${id}/Object> rdf:type ecrm:E22_Man-Made_Object ;
-                                           ecrm:P48_has_preferred_identifier :${id} ;
-                                           ecrm:P45_consists_of <http://curiocity.org/${id}/Material> ;
-                                           ecrm:P50_has_current_keeper <${location}>;
-                                           rdfs:label "${title}" ;
-                                           ecrm:P3_has_note "${description}" ;
-                                           ecrm:P2_has_type :${type} .
-
-      :${authorUrl} rdfs:label "${author}" .
-      <http://curiocity.org/${id}/Production> rdf:type ecrm:E12_Production ;
-                                               ecrm:P14_carried_out_by :${authorUrl};
-                                               ecrm:P108_has_produced <http://curiocity.org/${id}/Object> .
-
-  }
-  `;
-
-  fetch(`${process.env.URL_JENA}/update`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
-      accept: "application/sparql-results+json",
-      Authorization: `Basic ${auth}`,
-    },
-    body: new URLSearchParams({
-      update,
-    }),
-  })
-    .then((resp) =>
-      res.json({
-        ok: true,
-      })
-    )
-    .catch((err) => {
-      console.log(err);
-      res.status(500).json({
-        ok: false,
-        err,
-      });
-    });
+  const result = await createArtifactUtil({ ...req.body, type });
+  res.json(result);
 };
 
 const updateArtifact = async (req, res) => {
   const { id } = req.params;
 
-  const { action, info } = req.body;
-  if (!info) {
+  const { action, info, newInfo } = req.body;
+
+  if (!info || !newInfo) {
     return res.status(400).json({
       ok: false,
       message: "application info is required",
@@ -388,20 +343,7 @@ const updateArtifact = async (req, res) => {
   const authorUrl = encodeURIComponent(author);
 
   let update = prefixs;
-  if (action === "approved") {
-    update += `
-    DELETE {
-      ?artifact ecrm:P2_has_type :Unverified .
-    }
-    INSERT {
-      ?artifact ecrm:P2_has_type :Verified .
-    }
-    WHERE {
-      ?artifact ecrm:P48_has_preferred_identifier ?idCode .
-        ?idCode rdfs:label "${id}" .
-    }
-    `;
-  } else if (action === "declined") {
+  if (action === "approved" || action === "declined") {
     update += `
       DELETE WHERE{
               :${id} rdf:type ecrm:E42_Identifier ;
@@ -439,7 +381,11 @@ const updateArtifact = async (req, res) => {
       update,
     }),
   })
-    .then((resp) => {
+    .then(async (resp) => {
+      if (action === "approved") {
+        const result = await createArtifactUtil({ ...newInfo, type: "Verified", prevId: id });
+        return res.json(result);
+      }
       return res.json({
         ok: true,
       });

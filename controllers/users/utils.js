@@ -74,7 +74,6 @@ const userData = async (email) => {
     .then((resp) => {
       const result = resp.results.bindings;
       if (result && result.length > 0) {
-        console.log(result);
         return {
           ok: true,
           first_name: result[0].first_name.value,
