@@ -6,6 +6,7 @@ const {
   getArtifactByMuseum,
   createArtifact,
   updateArtifact,
+  updateMuseum,
   getUserInfo,
 } = require("../controllers/consult");
 const { getImage } = require("../controllers/uploads");
@@ -24,6 +25,7 @@ router.get("/museums", getMuseums);
 router.get("/museum", getArtifactByMuseum);
 router.post("/create", verifyToken, createArtifact);
 router.put("/update/:id", verifyToken, updateArtifact);
+router.put("/museum/update/:id", verifyToken, updateMuseum);
 router.get("/image/:id", getImage);
 router.post("/users/new_user", encryptPassword, registerUser);
 router.post("/users/login", loginUser);

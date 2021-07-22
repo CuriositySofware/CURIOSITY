@@ -171,13 +171,18 @@ const getArtifactById = (req = request, res = response) => {
 };
 
 const getMuseums = (req, res = response) => {
-  const query = `${prefixs}SELECT DISTINCT ?labelMuseum ?labelLocation ?museum {
-    ?artifact ecrm:P50_has_current_keeper ?museum ;
+  const query = `${prefixs}SELECT DISTINCT ?location ?labelLocation ?museum ?id_museum ?museum_siteCH ?labelMuseum ?description ?location_museum { 
+    ?artifact ecrm:P50_has_current_keeper ?museum;
               ecrm:P55_has_current_location ?location .
-    ?location rdfs:label ?labelLocation .
-    ?museum rdfs:label ?labelMuseum .
-    
-}`;
+    ?museum rdfs:label ?labelMuseum.
+    ?location rdfs:label ?labelLocation ;
+              ecrm:P89_falls_within ?museum_siteCH .
+    ?museum_siteCH a :SiteCH .
+    ?museum_siteCH ecrm:P48_has_preferred_identifier/rdfs:label ?id_museum;
+            :P3.1_has_description ?description;
+            ecrm:P53_has_former_or_current_location/rdfs:label ?location_museum.
+    }
+`;
 
   fetch(`${process.env.URL_JENA}/sparql`, {
     method: "POST",
@@ -210,6 +215,10 @@ const getMuseums = (req, res = response) => {
           (groupBymuseum[key] = {
             museum: groupBymuseum[key][0]["museum"],
             label: groupBymuseum[key][0]["labelMuseum"],
+            museum_siteCH: groupBymuseum[key][0]["museum_siteCH"],
+            description: groupBymuseum[key][0]["description"],
+            id: groupBymuseum[key][0]["id_museum"],
+            location: groupBymuseum[key][0]["location_museum"],
             rooms: getRooms(groupBymuseum[key]),
           })
       );
@@ -326,7 +335,7 @@ const updateArtifact = async (req, res) => {
 
   const { action, info, newInfo } = req.body;
 
-  if (!info || !newInfo) {
+  if (!info || !newInfo || !id) {
     return res.status(400).json({
       ok: false,
       message: "application info is required",
@@ -415,6 +424,71 @@ const updateArtifact = async (req, res) => {
     });
 };
 
+const updateMuseum = async (req, res) => {
+  const { id } = req.params;
+  const { oldDescription, newDescription } = req.body;
+  if (!oldDescription || !newDescription || !id) {
+    return res.status(400).json({
+      ok: false,
+      message: "Museum info is required",
+    });
+  }
+
+  const userInfo = await userData(req.user);
+  if (!userInfo.ok) {
+    return res.status(500).json({
+      ok: false,
+      message: userInfo.message,
+    });
+  }
+  if (userInfo.type !== "admin") {
+    return res.status(401).json({
+      ok: false,
+      message: "El usuario no tiene privilegios para editar museos",
+    });
+  }
+
+  let update = prefixs;
+
+  update += `
+      DELETE {
+        ?museum :P3.1_has_description """${oldDescription}""". 
+      }
+      INSERT {
+         ?museum :P3.1_has_description """${newDescription}""".         
+      }
+      WHERE{
+        BIND ( "${id}" AS ?id)     
+            ?museum a :SiteCH;
+                ecrm:P48_has_preferred_identifier/rdfs:label ?id.
+      }
+    `;
+
+  fetch(`${process.env.URL_JENA}/update`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded;charset=UTF-8",
+      accept: "application/sparql-results+json",
+      Authorization: `Basic ${auth}`,
+    },
+    body: new URLSearchParams({
+      update,
+    }),
+  })
+    .then((resp) => {
+      return res.status(resp.status).json({
+        ok: true,
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        ok: false,
+        err,
+      });
+    });
+};
+
 module.exports = {
   consult,
   getArtifactById,
@@ -422,5 +496,6 @@ module.exports = {
   getArtifactByMuseum,
   createArtifact,
   updateArtifact,
+  updateMuseum,
   prefixs,
 };
