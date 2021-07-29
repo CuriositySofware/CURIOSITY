@@ -5,7 +5,6 @@ const fs = require("fs");
 const { prefixs } = require("../controllers/consult");
 
 const getImage = async (req, res) => {
- 
   const id = req.params.id;
 
   if (!id) {
@@ -65,6 +64,40 @@ const getImage = async (req, res) => {
     });
 };
 
+const getMuseumImages = async (req, res) => {
+  const id = req.params.id;
+
+  if (!id) {
+    return res.status(403).send("Bad request");
+  }
+  const pathImage = path.join(__dirname, `../assets/Museos/${id}`);
+  console.log(pathImage);
+  const respons = [];
+  fs.readdir(pathImage, (error, files) => {
+    if (error) {
+      return res.status(404).json({
+        ok: false,
+        error: "El path no existe",
+      });
+    }
+
+    files.forEach((file) => {
+      const content = fs.readFileSync(path.join(pathImage, file), {
+        encoding: "base64",
+      });
+      respons.push({
+        name: file,
+        source: content,
+      });
+    });
+
+    res.status(200).json({
+      result: respons,
+    });
+  });
+};
+
 module.exports = {
   getImage,
+  getMuseumImages,
 };

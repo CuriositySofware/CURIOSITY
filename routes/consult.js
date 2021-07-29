@@ -9,7 +9,7 @@ const {
   updateMuseum,
   getUserInfo,
 } = require("../controllers/consult");
-const { getImage } = require("../controllers/uploads");
+const { getImage, getMuseumImages } = require("../controllers/uploads");
 const { registerUser } = require("../controllers/users/register");
 const { loginUser } = require("../controllers/users/login");
 const { userInfo, userEdit } = require("../controllers/users/userInfo");
@@ -27,6 +27,7 @@ router.post("/create", verifyToken, createArtifact);
 router.put("/update/:id", verifyToken, updateArtifact);
 router.put("/museum/update/:id", verifyToken, updateMuseum);
 router.get("/image/:id", getImage);
+router.get("/image/museums/:id", getMuseumImages);
 router.post("/users/new_user", encryptPassword, registerUser);
 router.post("/users/login", loginUser);
 router.get("/users/user_info", verifyToken, userInfo);
