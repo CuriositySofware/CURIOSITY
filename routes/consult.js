@@ -32,7 +32,7 @@ router.put("/update/:id", verifyToken, updateArtifact);
 router.put("/museum/update/:id", verifyToken, updateMuseum);
 router.get("/image/:id", getImage);
 router.get("/image/museums/:id", getMuseumImages);
-router.get("/image/museum/:id/:fileName", getSingleMuseumImage);
+router.post("/image/museum/:id/:fileName", getSingleMuseumImage);
 router.post("/users/new_user", encryptPassword, registerUser);
 router.post("/users/login", loginUser);
 router.get("/users/user_info", verifyToken, userInfo);
