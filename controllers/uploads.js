@@ -66,7 +66,7 @@ const getImage = async (req, res) => {
 
 const getSingleMuseumImage = async (req, res) => {
   const museumId = req.params.id;
-  const fileName = req.body.fileName;
+  const fileName = req.params.fileName;
 
   if (!museumId || !fileName) {
     return res.status(403).send("Bad request");
@@ -84,6 +84,7 @@ const getSingleMuseumImage = async (req, res) => {
         message: "Imagen de recorrido no encontrada",
       });
     }
+
     res.status(200).sendFile(pathImage);
   });
 };
@@ -95,7 +96,7 @@ const getMuseumImages = async (req, res) => {
     return res.status(403).send("Bad request");
   }
   const pathImage = path.join(__dirname, `../assets/Museos/${id}`);
-  console.log(pathImage);
+
   const respons = [];
   fs.readdir(pathImage, (error, files) => {
     if (error) {
